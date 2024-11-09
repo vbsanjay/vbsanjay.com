@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn how to manage multiple GitHub accounts on a single machine with SSH keys and automated email settings.">
+    <title>Mastering Multiple GitHub Accounts: A Step-by-Step Guide to Managing SSH Keys and Configuration</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <header>
+        <nav>
+            <ul>
+                <li><a href="#introduction">Home</a></li>
+                <li><a href="#steps">Step-by-Step Guide</a></li>
+                <li><a href="#references">References</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="introduction">
+            <h1>Mastering Multiple GitHub Accounts: A Step-by-Step Guide to Managing SSH Keys and Configuration</h1>
+            <p>Whether you’re a developer working across personal projects and corporate repositories or a freelancer juggling multiple client accounts, handling multiple GitHub profiles effectively can be challenging. In this guide, I’ll walk you through an easy-to-follow setup process to manage multiple GitHub accounts on a single machine using SSH keys and configuration files.</p>
+
+            <h2>Why Use SSH Keys to Manage GitHub Accounts?</h2>
+            <p>GitHub uses SSH keys as a secure way to verify your identity without needing a password. By generating different SSH keys for your personal and company accounts and configuring them correctly, you can seamlessly switch between accounts and avoid any errors when pushing or pulling code.</p>
+            <p>Let’s dive into how you can set this up!</p>
+        </section>
+
+        <section id="steps">
+            <h2>Step 1: Generate SSH Keys for Each Account</h2>
+            <p>First, create a unique SSH key for each GitHub account—one for your personal account and one for your company or client account. Here’s how:</p>
+            
+            <h3>For Company Account:</h3>
+            <pre><code>ssh-keygen -t ed25519 -C "your_company_email@example.com" -f ~/.ssh/company_github_username</code></pre>
+
+            <h3>For Personal Account:</h3>
+            <pre><code>ssh-keygen -t ed25519 -C "your_personal_email@example.com" -f ~/.ssh/personal_github_username</code></pre>
+
+            <p>This will generate two SSH keys, each associated with one of your GitHub accounts. Make sure to replace the email and username in each command with the appropriate information for your accounts.</p>
+
+            <h2>Step 2: Start the SSH Agent</h2>
+            <p>To use your SSH keys with GitHub, start the SSH agent and add your newly created keys:</p>
+            <pre><code>eval "$(ssh-agent -s)"</code></pre>
+
+            <h2>Step 3: Create an SSH Config File</h2>
+            <p>Next, configure your SSH settings to specify which key to use for each GitHub account. This makes it easy to connect the right key with the right account without manually specifying it each time.</p>
+
+            <p>Create an SSH config file:</p>
+            <pre><code>touch ~/.ssh/config</code></pre>
+            <p>Then, open this file and add the following configurations:</p>
+            <pre><code>
+# Company GitHub Account
+Host github-company
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/company_github_username
+
+# Personal GitHub Account
+Host github-personal
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/personal_github_username
+            </code></pre>
+
+            <p>Each block specifies a <code>Host</code>, allowing you to differentiate between your personal and company accounts. Now, when connecting to GitHub, you can use <code>github-company</code> for company-related repositories and <code>github-personal</code> for personal repositories.</p>
+
+            <h2>Step 4: Add SSH Keys to GitHub</h2>
+            <p>Now, let’s add your new SSH keys to GitHub so that both accounts can authenticate successfully.</p>
+            <ol>
+                <li>Copy your public SSH key to the clipboard:</li>
+                <pre><code>pbcopy < ~/.ssh/company_github_username.pub   # For Company</code></pre>
+                <pre><code>pbcopy < ~/.ssh/personal_github_username.pub  # For Personal</code></pre>
+                <li>Go to GitHub and navigate to <strong>Settings</strong> > <strong>SSH and GPG keys</strong>.</li>
+                <li>Click <strong>New SSH key</strong> and give it a title (e.g., “Personal Laptop” for personal, “Work Account” for company).</li>
+                <li>Paste your public key in the "Key" field, and click <strong>Add SSH key</strong>.</li>
+            </ol>
+            <p>Repeat this process for each account. GitHub will now recognize these keys and link them to their respective accounts.</p>
+
+            <h2>Step 5: Set Up Git Configuration for Each Account</h2>
+            <p>Git configuration files can help automatically manage user details and SSH keys based on the directory you’re working from, meaning you don’t have to reset your email every time you push code to a different account.</p>
+            
+            <p>1. Open your global Git configuration file and add specific configurations for each account:</p>
+            <pre><code>
+# Configuration for Personal GitHub Repositories
+[includeIf "gitdir:/Users/yourusername/personal/"]
+    path = ~/.gitconfig.personal
+
+# Configuration for Company GitHub Repositories
+[includeIf "gitdir:/Users/yourusername/company/"]
+    path = ~/.gitconfig.company
+            </code></pre>
+
+            <p>2. Then, create <code>.gitconfig.personal</code> and <code>.gitconfig.company</code> configuration files to include user details and SSH settings:</p>
+
+            <h3>For your Personal Account (<code>~/.gitconfig.personal</code>):</h3>
+            <pre><code>
+[user]
+    email = your_personal_email@example.com
+    name = Your Name
+
+[core]
+    sshCommand = "ssh -i ~/.ssh/personal_github_username"
+            </code></pre>
+
+            <h3>For your Company Account (<code>~/.gitconfig.company</code>):</h3>
+            <pre><code>
+[user]
+    email = your_company_email@example.com
+    name = Your Name
+
+[core]
+    sshCommand = "ssh -i ~/.ssh/company_github_username"
+            </code></pre>
+
+            <p>With these settings, Git will automatically use the correct email and SSH key for each repository based on its location.</p>
+
+            <h2>Automate Email Selection When Pushing Code</h2>
+            <p>By following the steps above, you won’t need to set your email every time you push code. Git will automatically detect the correct account configuration, saving you time and minimizing errors.</p>
+
+            <h2>Conclusion</h2>
+            <p>And that’s it! With these configurations, you’re all set to manage multiple GitHub accounts on a single machine seamlessly. By generating separate SSH keys and configuring Git to automatically detect which one to use, you can push code to different repositories effortlessly, allowing you to focus on your work without account-related interruptions.</p>
+            <p>Give this setup a try, and you’ll find managing multiple GitHub accounts smoother than ever. Happy coding!</p>
+        </section>
+
+        <section id="references">
+            <h2>References</h2>
+            <p>For further details and troubleshooting tips, refer to the official GitHub documentation:</p>
+            <ul>
+                <li><a href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent">GitHub: Generating a new SSH key and adding it to the SSH agent</a></li>
+                <li><a href="https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account?tool=webui">GitHub: Adding a new SSH key to your GitHub account</a></li>
+            </ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Your Name. All Rights Reserved.</p>
+    </footer>
+
+</body>
+</html>
